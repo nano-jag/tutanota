@@ -378,6 +378,7 @@ styles.registerStyle('main', () => {
 		'.flex-third-middle': {flex: '2 1 0'}, // take up more space for the middle column
 		'.flex-half': {flex: '0 0 50%'}, // splits a flex layout into two same width columns
 		'.flex-grow-shrink-half': {flex: '1 1 50%'},
+		'.flex-nogrow-shrink-half': {flex: '0 1 50%'},
 		'.flex-grow-shrink-auto': {flex: "1 1 auto"}, // allow element to grow and shrink using the elements width as default size.
 		'.flex-grow-shrink-150': {flex: "1 1 150px"},
 		'.flex-no-shrink': {flex: "1 0 0"},
@@ -1129,6 +1130,10 @@ styles.registerStyle('main', () => {
 			width: px(100)
 		},
 
+		'.calendar-invite-field': {
+			'min-width': '80px',
+		},
+
 		'button.floating': {
 			'border-radius': '50%',
 			'box-shadow': `0 3px 5px -1px rgba(0,0,0,.2), 0 6px 10px 0 rgba(0,0,0,.14), 0 1px 18px 0 rgba(0,0,0,.12)`,
@@ -1139,6 +1144,19 @@ styles.registerStyle('main', () => {
 		'button.floating:active': {
 			'box-shadow': '0 7px 8px -4px rgba(0,0,0,.2),0 12px 17px 2px rgba(0,0,0,.14),0 5px 22px 4px rgba(0,0,0,.12)'
 		},
+
+		'.block-list': {
+			'list-style': 'none',
+			padding: 0,
+		},
+
+		'.block-list li': {
+			display: 'block',
+		},
+		'.sticky': {
+			position: 'sticky'
+		},
+
 
 		// media query for small devices where elements should be arranged in one column
 		// also adaptions for table column widths
@@ -1225,6 +1243,13 @@ styles.registerStyle('main', () => {
 		'.mobile .header-right': {
 			left: 'auto',
 			width: `${px(size.navbar_edge_width_mobile)}`
+		},
+		'.menu-shadow': {
+			"box-shadow": "0 4px 5px 2px rgba(0,0,0,0.14), 0 4px 5px 2px rgba(0,0,0,0.14), 0 4px 5px 2px rgba(0,0,0,0.14)",
+		},
+		'.big-input input': {
+			'font-size': px(size.font_size_base * 1.4),
+			'line-height': `${px(size.font_size_base * 1.4 + 2)} !important`,
 		},
 
 		// media query for mobile devices, should be one pixel less than style.isDesktopLayout

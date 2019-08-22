@@ -27,7 +27,6 @@ import {deviceConfig} from "../misc/DeviceConfig"
 import {client} from "../misc/ClientDetector"
 import {secondFactorHandler} from "./SecondFactorHandler"
 import {showProgressDialog} from "../gui/base/ProgressDialog"
-import {mailModel} from "../mail/MailModel"
 import {themeId} from "../gui/theme"
 import {changeColorTheme} from "../native/SystemApp"
 import {CancelledError} from "../api/common/error/CancelledError"
@@ -40,8 +39,21 @@ import {HttpMethod} from "../api/common/EntityFunctions"
 import {TutanotaService} from "../api/entities/tutanota/Services"
 import {formatPrice} from "../subscription/SubscriptionUtils"
 import {calendarModel} from "../calendar/CalendarModel"
+import {locator} from "../api/main/MainLocator"
 
 assertMainOrNode()
+
+export interface ILoginViewController {
+	formLogin(): void;
+
+	autologin(credentials: Credentials): void;
+
+	deleteCredentialsNotLoggedIn(credentials: Credentials): Promise<void>;
+
+	migrateDeviceConfig(oldCredentials: Object[]): Promise<void>;
+
+	loadSignupWizard(): Promise<{+show: Function}>;
+}
 
 export class LoginViewController implements ILoginViewController {
 	view: LoginView;
@@ -205,31 +217,38 @@ export class LoginViewController implements ILoginViewController {
 		}
 
 		// do not return the promise. loading of dialogs can be executed in parallel
-		checkApprovalStatus(true).then(() => {
-			return this._showUpgradeReminder()
-		}).then(() => {
-			return this._checkStorageWarningLimit()
-		}).then(() => {
-			secondFactorHandler.setupAcceptOtherClientLoginListener()
-		}).then(() => {
-			if (!isAdminClient()) {
-				return mailModel.init()
-			}
-		}).then(() => logins.loginComplete()).then(() => {
+		checkApprovalStatus(true)
+			.then(() => {
+				return this._showUpgradeReminder()
+			})
+			.then(() => {
+				return this._checkStorageWarningLimit()
+			})
+			.then(() => {
+				secondFactorHandler.setupAcceptOtherClientLoginListener()
+			})
+			.then(() => {
+				if (!isAdminClient()) {
+					return locator.mailModel.init()
+				}
+			})
+			.then(() => logins.loginComplete()).then(() => {
 			// don't wait for it, just invoke
 			if (isApp()) {
 				fileApp.clearFileData()
 				       .catch((e) => console.log("Failed to clean file data", e))
 			}
-		}).then(() => {
-			if (logins.isGlobalAdminUserLoggedIn()) {
-				let receiveInfoData = createReceiveInfoServiceData()
-				return serviceRequestVoid(TutanotaService.ReceiveInfoService, HttpMethod.POST, receiveInfoData)
-			}
-		}).then(() => calendarModel.scheduleAlarmsLocally())
-		                         .then(() => lang.updateFormats({
-			                         hour12: logins.getUserController().userSettingsGroupRoot.timeFormat === TimeFormat.TWELVE_HOURS
-		                         }))
+		})
+			.then(() => {
+				if (logins.isGlobalAdminUserLoggedIn()) {
+					let receiveInfoData = createReceiveInfoServiceData()
+					return serviceRequestVoid(TutanotaService.ReceiveInfoService, HttpMethod.POST, receiveInfoData)
+				}
+			})
+			.then(() => calendarModel.init())
+			.then(() => lang.updateFormats({
+				hour12: logins.getUserController().userSettingsGroupRoot.timeFormat === TimeFormat.TWELVE_HOURS
+			}))
 	}
 
 	_showUpgradeReminder(): Promise<void> {

@@ -1,7 +1,7 @@
 // @flow
 import {CryptoError} from "../common/error/CryptoError"
 import {objToError, Queue, Request} from "../common/WorkerProtocol"
-import {UserController} from "../main/UserController"
+import {UserController} from "./UserController"
 import type {HttpMethodEnum, MediaTypeEnum} from "../common/EntityFunctions"
 import {TypeRef} from "../common/EntityFunctions"
 import {assertMainOrNode, isMain} from "../Env"
@@ -12,6 +12,7 @@ import {logins} from "./LoginController"
 import type {
 	AccountTypeEnum,
 	BookingItemFeatureTypeEnum,
+	CalendarMethodEnum,
 	CloseEventBusOptionEnum,
 	ConversationTypeEnum,
 	EntropySrcEnum,
@@ -19,7 +20,7 @@ import type {
 	SpamRuleFieldTypeEnum,
 	SpamRuleTypeEnum
 } from "../common/TutanotaConstants"
-import {initLocator, locator} from "./MainLocator"
+import {locator} from "./MainLocator"
 import {client} from "../../misc/ClientDetector"
 import {downcast, identity} from "../common/utils/Utils"
 import stream from "mithril/stream/stream.js"
@@ -72,7 +73,7 @@ export class WorkerClient {
 
 	constructor() {
 		this.infoMessages = stream()
-		initLocator(this)
+		locator.init(this)
 		this._initWorker()
 		this.initialized.then(() => {
 			this._initServices()
@@ -256,8 +257,8 @@ export class WorkerClient {
 		return this._postRequest(new Request('updateMailDraft', arguments))
 	}
 
-	sendMailDraft(draft: Mail, recipientInfos: RecipientInfo[], language: string): Promise<void> {
-		return this._postRequest(new Request('sendMailDraft', arguments))
+	sendMailDraft(draft: Mail, recipientInfos: RecipientInfo[], language: string, calendarMethods: Array<[IdTuple, CalendarMethodEnum]> = []): Promise<void> {
+		return this._postRequest(new Request('sendMailDraft', [draft, recipientInfos, language, calendarMethods]))
 	}
 
 	downloadFileContent(file: TutanotaFile): Promise<DataFile> {
@@ -539,7 +540,7 @@ export class WorkerClient {
 		return this._queue.postMessage(new Request("createCalendarEvent", [event, alarmInfo, oldEvent]))
 	}
 
-	updateCalendarEvent(event: CalendarEvent, alarmInfo: Array<AlarmInfo>, oldEvent: ?CalendarEvent) {
+	updateCalendarEvent(event: CalendarEvent, alarmInfo: Array<AlarmInfo>, oldEvent: CalendarEvent) {
 		return this._queue.postMessage(new Request("updateCalendarEvent", [event, alarmInfo, oldEvent]))
 	}
 
@@ -588,6 +589,10 @@ export class WorkerClient {
 
 	checkMailForPhishing(mail: Mail, links: Array<string>, markers: Set<string>): Promise<boolean> {
 		return this._queue.postMessage(new Request("checkMailForPhishing", [mail, links, markers]))
+	}
+
+	getEventByUid(uid: string): Promise<?CalendarEvent> {
+		return this._queue.postMessage(new Request("getEventByUid", [uid]))
 	}
 }
 
