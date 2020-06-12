@@ -13,7 +13,8 @@ import {assertMainOrNode} from "../Env"
 import {Notifications} from "../../gui/Notifications"
 import {logins} from "./LoginController"
 import type {CalendarModel} from "../../calendar/CalendarModel"
-import {asyncImport} from "../common/utils/Utils"
+import {CalendarModelImpl} from "../../calendar/CalendarModel"
+import {asyncImport, lazyMemoized} from "../common/utils/Utils"
 import {getTimeZone} from "../../calendar/CalendarUtils"
 
 assertMainOrNode()
@@ -32,6 +33,7 @@ export type MainLocatorType = {
 	) => Promise<CalendarEventViewModel>;
 	mailModel: MailModel;
 	init: (WorkerClient) => void;
+	calendarModel(): CalendarModel;
 }
 
 export const locator: MainLocatorType = ({
@@ -39,7 +41,7 @@ export const locator: MainLocatorType = ({
 		const importBase = typeof module !== "undefined" ? module.id : __moduleName
 		this.eventController = new EventController(logins)
 		this.entropyCollector = new EntropyCollector(worker)
-		this.search = new SearchModel()
+		this.search = new SearchModel(worker)
 		this.mailModel = new MailModel(new Notifications(), this.eventController)
 
 		this.calendarUpdateDistributor = () =>
@@ -51,13 +53,11 @@ export const locator: MainLocatorType = ({
 				this.calendarUpdateDistributor(),
 				(asyncImport(importBase, `${env.rootPathPrefix}src/calendar/CalendarEventViewModel.js`):
 					Promise<{CalendarEventViewModel: Class<CalendarEventViewModel>}>),
-				(asyncImport(importBase, `${env.rootPathPrefix}src/calendar/CalendarModel.js`):
-					Promise<{calendarModel: CalendarModel}>),
-			]).then(([distributor, {CalendarEventViewModel}, {calendarModel}]) =>
+			]).then(([distributor, {CalendarEventViewModel}]) =>
 				new CalendarEventViewModel(
 					logins.getUserController(),
 					distributor,
-					calendarModel,
+					this.calendarModel(),
 					mailboxDetail,
 					date,
 					getTimeZone(),
@@ -65,7 +65,9 @@ export const locator: MainLocatorType = ({
 					existingEvent,
 				)
 			)
-	}
+		this.calendarModel = lazyMemoized(() =>
+			new CalendarModelImpl(new Notifications, this.eventController, worker, logins.getUserController()))
+	},
 }: any)
 
 if (typeof window !== "undefined") {

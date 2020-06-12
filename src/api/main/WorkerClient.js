@@ -1,14 +1,11 @@
 // @flow
 import {CryptoError} from "../common/error/CryptoError"
 import {objToError, Queue, Request} from "../common/WorkerProtocol"
-import {UserController} from "./UserController"
 import type {HttpMethodEnum, MediaTypeEnum} from "../common/EntityFunctions"
 import {TypeRef} from "../common/EntityFunctions"
 import {assertMainOrNode, isMain} from "../Env"
-import {TutanotaPropertiesTypeRef} from "../entities/tutanota/TutanotaProperties"
-import {load, loadRoot, setup} from "./Entity"
+import {setup} from "./Entity"
 import {nativeApp} from "../../native/NativeWrapper"
-import {logins} from "./LoginController"
 import type {
 	AccountTypeEnum,
 	BookingItemFeatureTypeEnum,
@@ -26,8 +23,6 @@ import {downcast, identity} from "../common/utils/Utils"
 import stream from "mithril/stream/stream.js"
 import type {InfoMessage} from "../common/CommonTypes"
 import type {EventWithAlarmInfo} from "../worker/facades/CalendarFacade"
-import {createUserSettingsGroupRoot, UserSettingsGroupRootTypeRef} from "../entities/tutanota/UserSettingsGroupRoot"
-import {NotFoundError} from "../common/error/RestError"
 import {handleUncaughtError} from "../../misc/ErrorHandler"
 import type {ContactFormAccountReturn} from "../entities/tutanota/ContactFormAccountReturn"
 import type {User} from "../entities/sys/User"
@@ -49,6 +44,9 @@ import type {PushIdentifier} from "../entities/sys/PushIdentifier"
 import type {GroupInvitationPostReturn} from "../entities/tutanota/GroupInvitationPostReturn"
 import type {ReceivedGroupInvitation} from "../entities/sys/ReceivedGroupInvitation"
 import type {Mail} from "../entities/tutanota/Mail"
+import type {EntityRestInterface} from "../worker/rest/EntityRestClient"
+import type {NewSessionData} from "../worker/facades/LoginFacade"
+import {logins} from "./LoginController"
 
 assertMainOrNode()
 
@@ -63,7 +61,7 @@ type Message = {
 	args: mixed[]
 }
 
-export class WorkerClient {
+export class WorkerClient implements EntityRestInterface {
 	initialized: Promise<void>;
 
 	_queue: Queue;
@@ -187,30 +185,6 @@ export class WorkerClient {
 		return this.initialized.then(() => this._postRequest(new Request('createSession', arguments)))
 	}
 
-	createSession(username: string, password: string, clientIdentifier: string, persistentSession: boolean, permanentLogin: boolean): Promise<Credentials> {
-		return this.createWorkerSession(username, password, clientIdentifier, persistentSession, permanentLogin)
-		           .then(loginData => {
-			           return this._initUserController(loginData.user, loginData.userGroupInfo, loginData.sessionId, loginData.credentials.accessToken, persistentSession)
-			                      .then(() => loginData.credentials)
-		           })
-	}
-
-	_initUserController(user: User, userGroupInfo: GroupInfo, sessionId: IdTuple, accessToken: Base64Url, persistentSession: boolean): Promise<void> {
-		return Promise
-			.all([
-				loadRoot(TutanotaPropertiesTypeRef, user.userGroup.group),
-				load(UserSettingsGroupRootTypeRef, user.userGroup.group)
-					.catch(NotFoundError, () =>
-						setup(null, Object.assign(createUserSettingsGroupRoot(), {
-							_ownerGroup: user.userGroup.group
-						}))
-							.then(() => load(UserSettingsGroupRootTypeRef, user.userGroup.group)))
-			])
-			.then(([props, userSettingsGroupRoot]) => {
-				logins.setUserController(new UserController(user, userGroupInfo, sessionId, props, accessToken, persistentSession, userSettingsGroupRoot))
-			})
-	}
-
 	loadExternalPasswordChannels(userId: Id, salt: Uint8Array): Promise<PasswordChannelReturn> {
 		return this.initialized.then(() => this._postRequest(new Request('loadExternalPasswordChannels', arguments)))
 	}
@@ -219,18 +193,14 @@ export class WorkerClient {
 		return this._postRequest(new Request('sendExternalPasswordSms', arguments))
 	}
 
-	createExternalSession(userId: Id, password: string, salt: Uint8Array, clientIdentifier: string, persistentSession: boolean): Promise<Credentials> {
-		return this.initialized.then(() => this._postRequest(new Request('createExternalSession', arguments))
-		                                       .then(loginData => {
-			                                       return this._initUserController(loginData.user, loginData.userGroupInfo, loginData.sessionId, loginData.credentials.accessToken, persistentSession)
-			                                                  .then(() => loginData.credentials)
-		                                       }))
+	createExternalSession(userId: Id, password: string, salt: Uint8Array, clientIdentifier: string, persistentSession: boolean
+	): Promise<NewSessionData> {
+		return this.initialized.then(() => this._postRequest(new Request('createExternalSession', arguments)))
 	}
 
-	resumeSession(credentials: Credentials, externalUserSalt: ?Uint8Array): Promise<void> {
-		return this._postRequest(new Request('resumeSession', arguments)).then(loginData => {
-			return this._initUserController(loginData.user, loginData.userGroupInfo, loginData.sessionId, credentials.accessToken, true)
-		})
+	resumeSession(credentials: Credentials, externalUserSalt: ?Uint8Array
+	): Promise<{user: User, userGroupInfo: GroupInfo, sessionId: IdTuple}> {
+		return this._postRequest(new Request('resumeSession', arguments))
 	}
 
 	deleteSession(accessToken: Base64Url): Promise<void> {

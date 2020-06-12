@@ -742,6 +742,7 @@ o.spec("CalendarModel", function () {
 			const anotherGuest = "another-attendee"
 			const alarm = createAlarmInfo({_id: "alarm-id"})
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				uid,
 				_ownerGroup: groupRoot._id,
 				summary: "v1",
@@ -843,6 +844,7 @@ o.spec("CalendarModel", function () {
 				alarmInfo: alarm,
 			}))
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				_ownerGroup: groupRoot._id,
 				summary: "v1",
 				sequence: "1",

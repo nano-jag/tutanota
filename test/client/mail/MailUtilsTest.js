@@ -2,20 +2,23 @@
 import o from "ospec/ospec.js"
 import {GroupType} from "../../../src/api/common/TutanotaConstants"
 import {createRecipientInfo, parseMailtoUrl} from "../../../src/mail/MailUtils"
-import {logins} from "../../../src/api/main/LoginController"
+import {LoginControllerImpl, logins} from "../../../src/api/main/LoginController"
 import {recipientInfoType} from "../../../src/api/common/RecipientInfo"
+import {UserController} from "../../../src/api/main/UserController"
+import {downcast} from "../../../src/api/common/utils/Utils"
+import type {LoginController} from "../../../src/api/main/LoginController"
 
 
 o.spec("MailUtils", browser(function () {
 
 	o.before(function () {
-		logins._userController = ({
+		downcast<LoginControllerImpl>(logins)._userController = ({
 			user: {
 				_id: 'userId',
 				memberships: [{groupType: GroupType.Contact, group: 'groupId'}]
 			},
 			isInternalUser: () => true
-		}:any)
+		}: any)
 	})
 
 	o("create contact from recipient info", function () {

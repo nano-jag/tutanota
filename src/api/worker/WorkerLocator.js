@@ -19,6 +19,7 @@ import {CloseEventBusOption, Const} from "../common/TutanotaConstants"
 import type {BrowserData} from "../../misc/ClientConstants"
 import {CalendarFacade} from "./facades/CalendarFacade"
 import {ShareFacade} from "./facades/ShareFacade"
+import type {EntityRestInterface} from "./rest/EntityRestClient"
 
 assertWorkerOrNode()
 type WorkerLocatorType = {

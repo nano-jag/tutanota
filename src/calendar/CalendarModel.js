@@ -23,7 +23,7 @@ import {isAllDayEvent, isAllDayEventByTimes} from "../api/common/utils/CommonCal
 import {Notifications} from "../gui/Notifications"
 import type {EntityUpdateData} from "../api/main/EventController"
 import {EventController, isUpdateForTypeRef} from "../api/main/EventController"
-import {worker, WorkerClient} from "../api/main/WorkerClient"
+import {WorkerClient} from "../api/main/WorkerClient"
 import {locator} from "../api/main/MainLocator"
 import {_eraseEntity, _loadEntity, elementIdPart, getElementId, HttpMethod, isSameId, listIdPart} from "../api/common/EntityFunctions"
 import {erase, load, loadAll, loadMultipleList, serviceRequestVoid} from "../api/main/Entity"
@@ -48,7 +48,6 @@ import type {CalendarInfo} from "./CalendarView"
 import {FileTypeRef} from "../api/entities/tutanota/File"
 import type {ParsedCalendarData} from "./CalendarImporter"
 import {parseCalendarFile} from "./CalendarImporter"
-import {module as replaced} from "@hot"
 import type {CalendarEventUpdate} from "../api/entities/tutanota/CalendarEventUpdate"
 import {CalendarEventUpdateTypeRef} from "../api/entities/tutanota/CalendarEventUpdate"
 import {LazyLoaded} from "../api/common/utils/LazyLoaded"
@@ -334,6 +333,8 @@ export function loadCalendarInfos(): Promise<Map<Id, CalendarInfo>> {
 
 // Complete as needed
 export interface CalendarModel {
+	init(): Promise<void>;
+
 	createEvent(event: CalendarEvent, alarmInfos: Array<AlarmInfo>, zone: string, groupRoot: CalendarGroupRoot): Promise<void>;
 
 	/** Update existing event when time did not change */
@@ -344,6 +345,8 @@ export interface CalendarModel {
 	deleteEvent(event: CalendarEvent): Promise<void>;
 
 	loadAlarms(alarmInfos: Array<IdTuple>, user: User): Promise<Array<UserAlarmInfo>>;
+
+	loadCalendarInfos(): Promise<Map<Id, CalendarInfo>>;
 }
 
 export class CalendarModelImpl implements CalendarModel {
@@ -355,6 +358,7 @@ export class CalendarModelImpl implements CalendarModel {
 	_pendingAlarmRequests: Map<string, DeferredObject<void>>;
 
 	constructor(notifications: Notifications, eventController: EventController, worker: WorkerClient, userController: IUserController) {
+		assertNotNull(userController)
 		this._notifications = notifications
 		this._worker = worker
 		this._userController = userController
@@ -376,9 +380,10 @@ export class CalendarModelImpl implements CalendarModel {
 	updateEvent(newEvent: CalendarEvent, newAlarms: Array<AlarmInfo>, zone: string, groupRoot: CalendarGroupRoot,
 	            existingEvent: CalendarEvent
 	): Promise<void> {
-		if (existingEvent == null
-			|| existingEvent._ownerGroup !== groupRoot._id // event has been moved to another calendar
-			|| newEvent.startTime.getTime() !== existingEvent.startTime.getTime()
+		if (existingEvent._id == null) {
+			throw new Error("Invalid existing event: no id")
+		}
+		if (existingEvent._ownerGroup !== groupRoot._id || newEvent.startTime.getTime() !== existingEvent.startTime.getTime()
 			|| !repeatRulesEqual(newEvent.repeatRule, existingEvent.repeatRule)
 		) {
 			return this._doCreate(newEvent, zone, groupRoot, newAlarms, existingEvent)
@@ -389,7 +394,7 @@ export class CalendarModelImpl implements CalendarModel {
 	}
 
 	loadCalendarInfos(): Promise<Map<Id, CalendarInfo>> {
-		const userId = logins.getUserController().user._id
+		const userId = this._userController.user._id
 		return load(UserTypeRef, userId)
 			.then(user => {
 				const calendarMemberships = user.memberships.filter(m => m.groupType === GroupType.Calendar);
@@ -684,12 +689,6 @@ export class CalendarModelImpl implements CalendarModel {
 	_localAlarmsEnabled(): boolean {
 		return !isApp() && logins.isInternalUserLoggedIn() && !logins.isEnabled(FeatureType.DisableCalendar) && client.calendarSupported()
 	}
-}
-
-export const calendarModel = new CalendarModelImpl(new Notifications(), locator.eventController, worker, logins.getUserController())
-
-if (replaced) {
-	Object.assign(calendarModel, replaced.calendarModel)
 }
 
 // allDay event consists of full UTC days. It always starts at 00:00:00.00 of its start day in UTC and ends at

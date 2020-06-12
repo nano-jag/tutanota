@@ -27,6 +27,7 @@ import {RecoverCodeTypeRef} from "../../entities/sys/RecoverCode"
 import {NotAuthorizedError, NotFoundError} from "../../common/error/RestError"
 import {MailTypeRef} from "../../entities/tutanota/Mail"
 import type {EntityUpdate} from "../../entities/sys/EntityUpdate"
+import type {EntityRestInterface} from "./EntityRestClient"
 
 const ValueType = EC.ValueType
 

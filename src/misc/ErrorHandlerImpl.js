@@ -102,7 +102,7 @@ export function handleUncaughtError(e: Error) {
 			Dialog.showRequestPasswordDialog(errorMessage, {allowCancel: false})
 			      .map(pw => {
 					      showProgressDialog("pleaseWait_msg",
-						      worker.createSession(neverNull(logins.getUserController().userGroupInfo.mailAddress),
+						      logins.createSession(neverNull(logins.getUserController().userGroupInfo.mailAddress),
 							      pw, client.getIdentifier(), false, true))
 						      .then(() => {
 							      errorMessage("")

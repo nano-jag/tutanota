@@ -317,6 +317,7 @@ o.spec("CalendarEventViewModel", function () {
 			const distributor = makeDistributor()
 			const guest = "new-attendee@example.com"
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				attendees: [
 					createCalendarEventAttendee({
 						address: createEncryptedMailAddress({address: guest})
@@ -349,6 +350,7 @@ o.spec("CalendarEventViewModel", function () {
 				address: createEncryptedMailAddress({address: toRemoveGuest})
 			})
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				attendees: [
 					createCalendarEventAttendee({
 						address: createEncryptedMailAddress({address: oldGuest})
@@ -386,6 +388,7 @@ o.spec("CalendarEventViewModel", function () {
 				address: createEncryptedMailAddress({address: toRemoveGuest})
 			})
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				attendees: [
 					createCalendarEventAttendee({
 						address: createEncryptedMailAddress({address: oldGuest})
@@ -421,6 +424,7 @@ o.spec("CalendarEventViewModel", function () {
 				address: createEncryptedMailAddress({address: toRemoveGuest})
 			})
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				attendees: [
 					toRemoveAttendee
 				],
@@ -465,7 +469,8 @@ o.spec("CalendarEventViewModel", function () {
 			const result = await viewModel.onOkPressed()
 
 			o(result).deepEquals({status: "ok", askForUpdates: null})
-			const [createdEvent] = calendarModel.updateEvent.calls[0].args
+			// As it is a "new" event, we must create it, not update
+			const [createdEvent] = calendarModel.createEvent.calls[0].args
 			o(createdEvent.attendees.length).equals(2)
 			o(createdEvent.attendees.find(a =>
 				a.address.address === ownAttendee.address.address).status).equals(CalendarAttendeeStatus.ACCEPTED)
@@ -485,7 +490,7 @@ o.spec("CalendarEventViewModel", function () {
 			const calendarModel = makeCalendarModel()
 			const startTime = DateTime.fromObject({year: 2020, month: 6, day: 4, hour: 12, zone}).toJSDate()
 			const endTime = DateTime.fromObject({year: 2020, month: 6, day: 4, hour: 13, zone}).toJSDate()
-			const existingEvent = createCalendarEvent({startTime, endTime})
+			const existingEvent = createCalendarEvent({_id: ["listId", "eventId"], startTime, endTime})
 			const viewModel = init({calendars, existingEvent, calendarModel})
 			const result = await viewModel.onOkPressed()
 			o(result).deepEquals({status: "ok", askForUpdates: null})
@@ -589,6 +594,7 @@ o.spec("CalendarEventViewModel", function () {
 			// TODO: add capability and test without capability
 			const calendarModel = makeCalendarModel()
 			const existingEvent = createCalendarEvent({
+				_id: ["listId", "eventId"],
 				organizer: "organizer@tutanota.de",
 				startTime: DateTime.utc(2020, 6, 11).toJSDate(),
 				endTime: DateTime.utc(2020, 7, 12).toJSDate(),
@@ -848,12 +854,12 @@ function makeDistributor(): CalendarUpdateDistributor {
 }
 
 function makeCalendarModel(): CalendarModel {
-	return {
+	return downcast({
 		createEvent: o.spy(() => Promise.resolve()),
 		updateEvent: o.spy(() => Promise.resolve()),
 		deleteEvent: o.spy(() => Promise.resolve()),
 		loadAlarms: o.spy(() => Promise.resolve([]))
-	}
+	})
 }
 
 function assertAskedForUpdates(result: EventCreateResult): ((bool) => Promise<void>) {

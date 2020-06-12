@@ -1,6 +1,6 @@
 // @flow
 import {AccountType, GroupType, OperationType} from "../common/TutanotaConstants"
-import {load, loadRoot} from "./Entity"
+import {load, loadRoot, setup} from "./Entity"
 import {downcast, neverNull} from "../common/utils/Utils"
 import type {Customer} from "../entities/sys/Customer"
 import {CustomerTypeRef} from "../entities/sys/Customer"
@@ -16,11 +16,12 @@ import {_TypeModel as SessionModelType} from "../entities/sys/Session"
 import type {EntityUpdateData} from "./EventController"
 import {isUpdateForTypeRef} from "./EventController"
 import type {UserSettingsGroupRoot} from "../entities/tutanota/UserSettingsGroupRoot"
-import {UserSettingsGroupRootTypeRef} from "../entities/tutanota/UserSettingsGroupRoot"
+import {createUserSettingsGroupRoot, UserSettingsGroupRootTypeRef} from "../entities/tutanota/UserSettingsGroupRoot"
 import {SysService} from "../entities/sys/Services"
 import {createCloseSessionServicePost} from "../entities/sys/CloseSessionServicePost"
 import {worker} from "./WorkerClient"
 import type {GroupMembership} from "../entities/sys/GroupMembership"
+import {NotFoundError} from "../common/error/RestError"
 
 assertMainOrNode()
 
@@ -227,5 +228,28 @@ export class UserController implements IUserController {
 			}
 		})
 	}
+}
 
+export type UserControllerInitData = {
+	user: User, userGroupInfo: GroupInfo, sessionId: IdTuple, accessToken: Base64Url, persistentSession: boolean
+}
+
+// noinspection JSUnusedGlobalSymbols
+// dynamically imported
+export function initUserController(
+	{user, userGroupInfo, sessionId, accessToken, persistentSession}: UserControllerInitData
+): Promise<UserController> {
+	return Promise
+		.all([
+			loadRoot(TutanotaPropertiesTypeRef, user.userGroup.group),
+			load(UserSettingsGroupRootTypeRef, user.userGroup.group)
+				.catch(NotFoundError, () =>
+					setup(null, Object.assign(createUserSettingsGroupRoot(), {
+						_ownerGroup: user.userGroup.group
+					}))
+						.then(() => load(UserSettingsGroupRootTypeRef, user.userGroup.group)))
+		])
+		.then(([props, userSettingsGroupRoot]) =>
+			new UserController(user, userGroupInfo, sessionId, props, accessToken, persistentSession, userSettingsGroupRoot)
+		)
 }

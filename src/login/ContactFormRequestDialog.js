@@ -284,7 +284,7 @@ export class ContactFormRequestDialog {
 				let sendRequest = worker.createContactFormUser(password, this._contactForm._id, statisticsFields)
 				                        .then(contactFormResult => {
 					                        let userEmailAddress = contactFormResult.responseMailAddress
-					                        return worker.createSession(userEmailAddress, password, client.getIdentifier(), false, false)
+					                        return logins.createSession(userEmailAddress, password, client.getIdentifier(), false, false)
 					                                     .then(() => {
 						                                     let p = Promise.resolve()
 						                                     if (cleanedNotificationMailAddress) {

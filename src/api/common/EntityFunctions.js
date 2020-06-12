@@ -10,6 +10,7 @@ import {
 import EC from "./EntityConstants"
 import {asyncImport} from "./utils/Utils"
 import {last} from "./utils/ArrayUtils"
+import type {EntityRestInterface} from "../worker/rest/EntityRestClient"
 
 const Type = EC.Type
 const ValueType = EC.ValueType

@@ -536,7 +536,7 @@ export class CalendarEventViewModel {
 		}
 
 		const doCreateEvent = () => {
-			if (existingEvent == null) {
+			if (existingEvent == null || existingEvent._id == null) {
 				return this._calendarModel.createEvent(newEvent, newAlarms, this._zone, groupRoot)
 			} else {
 				return this._calendarModel.updateEvent(newEvent, newAlarms, this._zone, groupRoot, existingEvent)

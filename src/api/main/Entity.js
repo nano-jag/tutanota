@@ -28,6 +28,7 @@ import EC from "../common/EntityConstants"
 import {downcast} from "../common/utils/Utils"
 import type {VersionReturn} from "../entities/sys/VersionReturn"
 import type {RootInstance} from "../entities/sys/RootInstance"
+import type {EntityRestInterface} from "../worker/rest/EntityRestClient"
 
 const Type = EC.Type
 const ValueType = EC.ValueType

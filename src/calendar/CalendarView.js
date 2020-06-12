@@ -80,7 +80,6 @@ import {LazyLoaded} from "../api/common/utils/LazyLoaded"
 import type {CalendarGroupRoot} from "../api/entities/tutanota/CalendarGroupRoot"
 import type {GroupInfo} from "../api/entities/sys/GroupInfo"
 import {GroupInfoTypeRef} from "../api/entities/sys/GroupInfo"
-import {calendarModel} from "./CalendarModel"
 
 export const LIMIT_PAST_EVENTS_YEARS = 100
 export const DEFAULT_HOUR_OF_DAY = 6
@@ -253,9 +252,9 @@ export class CalendarView implements CurrentView {
 
 		this.viewSlider = new ViewSlider([this.sidebarColumn, this.contentColumn], "CalendarView")
 		// load all calendars. if there is no calendar yet, create one
-		this._calendarInfos = calendarModel.loadCalendarInfos().then(calendarInfos => {
+		this._calendarInfos = locator.calendarModel().loadCalendarInfos().then(calendarInfos => {
 			if (calendarInfos.size === 0) {
-				return worker.addCalendar("").then(() => calendarModel.loadCalendarInfos())
+				return worker.addCalendar("").then(() => locator.calendarModel().loadCalendarInfos())
 			} else {
 				return calendarInfos
 			}
@@ -842,7 +841,7 @@ export class CalendarView implements CurrentView {
 							if (calendarMemberships.length !== calendarInfos.size) {
 								this._loadedMonths.clear()
 								this._replaceEvents(new Map())
-								this._calendarInfos = calendarModel.loadCalendarInfos()
+								this._calendarInfos = locator.calendarModel().loadCalendarInfos()
 								this._calendarInfos.then(() => {
 									const selectedDate = this.selectedDate()
 									const previousMonthDate = new Date(selectedDate)

@@ -38,7 +38,6 @@ import {createReceiveInfoServiceData} from "../api/entities/tutanota/ReceiveInfo
 import {HttpMethod} from "../api/common/EntityFunctions"
 import {TutanotaService} from "../api/entities/tutanota/Services"
 import {formatPrice} from "../subscription/SubscriptionUtils"
-import {calendarModel} from "../calendar/CalendarModel"
 import {locator} from "../api/main/MainLocator"
 
 assertMainOrNode()
@@ -76,7 +75,7 @@ export class LoginViewController implements ILoginViewController {
 	autologin(credentials: Credentials): void {
 		if (this._loginPromise.isPending()) return
 		this._loginPromise = showProgressDialog("login_msg", worker.initialized.then(() => {
-			return this._handleSession(worker.resumeSession(credentials), () => {
+			return this._handleSession(logins.resumeSession(credentials), () => {
 				this.view._showLoginForm(credentials.mailAddress)
 			})
 		}))
@@ -88,7 +87,7 @@ export class LoginViewController implements ILoginViewController {
 			return worker.decryptUserPassword(c.userId, c.deviceToken, c.encryptedPassword)
 			             .then(userPw => {
 				             if (isMailAddress(c.mailAddress, true)) { // do not migrate credentials of external users
-					             return worker.createSession(c.mailAddress, userPw, client.getIdentifier(), true, false)
+					             return logins.createSession(c.mailAddress, userPw, client.getIdentifier(), true, false)
 					                          .then(newCredentials => {
 						                          deviceConfig.set(newCredentials)
 					                          })
@@ -112,7 +111,7 @@ export class LoginViewController implements ILoginViewController {
 			this.view.helpText = lang.get('login_msg')
 			this.view.invalidCredentials = false
 			let persistentSession = this.view.savePassword.checked()
-			this._loginPromise = worker.createSession(mailAddress, pw, client.getIdentifier(), persistentSession, true)
+			this._loginPromise = logins.createSession(mailAddress, pw, client.getIdentifier(), persistentSession, true)
 			                           .then(newCredentials => {
 				                           let storedCredentials = deviceConfig.get(mailAddress)
 				                           if (persistentSession) {
@@ -245,7 +244,7 @@ export class LoginViewController implements ILoginViewController {
 					return serviceRequestVoid(TutanotaService.ReceiveInfoService, HttpMethod.POST, receiveInfoData)
 				}
 			})
-			.then(() => calendarModel.init())
+			.then(() => locator.calendarModel().init())
 			.then(() => lang.updateFormats({
 				hour12: logins.getUserController().userSettingsGroupRoot.timeFormat === TimeFormat.TWELVE_HOURS
 			}))
