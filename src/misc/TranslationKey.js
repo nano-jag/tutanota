@@ -1,6 +1,7 @@
 //@flow
 
-export type TranslationKeyType = "about_label"
+export type TranslationKeyType =
+	| "about_label"
 	| "acceptInvitation_action"
 	| "acceptPrivacyPolicyReminder_msg"
 	| "acceptPrivacyPolicy_msg"
@@ -1109,3 +1110,5 @@ export type TranslationKeyType = "about_label"
 	| "when_label"
 	| "awaiting_label"
 	| "guests_label"
+	| "attendingEvent_label"
+	| "eventCopy_msg"

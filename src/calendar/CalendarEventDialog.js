@@ -183,8 +183,7 @@ export function showCalendarEventDialog(date: Date, calendars: Map<Id, CalendarI
 		}
 
 		const renderGoingSelector = () => m(DropDownSelectorN, Object.assign({}, {
-			// TODO: translate
-			label: () => "Going?",
+			label: "attendingEvent_label",
 			items: [
 				{name: lang.get("noSelection_msg"), value: CalendarAttendeeStatus.NEEDS_ACTION, selectable: false},
 				{name: lang.get("yes_label"), value: CalendarAttendeeStatus.ACCEPTED},
@@ -194,6 +193,32 @@ export function showCalendarEventDialog(date: Date, calendars: Map<Id, CalendarI
 			selectedValue: stream(viewModel.going),
 			selectionChangedHandler: (going) => viewModel.selectGoing(going)
 		}, {disabled: !viewModel.canModifyOwnAttendance()}))
+
+		const renderEasyGoingSelector = () => viewModel.existingEvent && viewModel.existingEvent.isCopy
+			? renderTwoColumnsIfFits(
+				m(".flex.items-center.flex-grow", [
+						m("", lang.get("attendingEvent_label")),
+						m(".flex-grow"),
+						m(ButtonN, {
+							label: "yes_label",
+							click: () => viewModel.replyGoingDirectly(CalendarAttendeeStatus.ACCEPTED).then(() => dialog.close()),
+							type: viewModel.going === CalendarAttendeeStatus.ACCEPTED ? ButtonType.Primary : ButtonType.Secondary,
+						}),
+						m(ButtonN, {
+							label: "maybe_label",
+							click: () => viewModel.replyGoingDirectly(CalendarAttendeeStatus.TENTATIVE).then(() => dialog.close()),
+							type: viewModel.going === CalendarAttendeeStatus.TENTATIVE ? ButtonType.Primary : ButtonType.Secondary,
+						}),
+						m(ButtonN, {
+							label: "no_label",
+							click: () => viewModel.replyGoingDirectly(CalendarAttendeeStatus.DECLINED).then(() => dialog.close()),
+							type: viewModel.going === CalendarAttendeeStatus.DECLINED ? ButtonType.Primary : ButtonType.Secondary,
+						}),
+					]
+				),
+				null
+			)
+			: null
 
 		const renderDateTimePickers = () => renderTwoColumnsIfFits(
 			[
@@ -307,12 +332,20 @@ export function showCalendarEventDialog(date: Date, calendars: Map<Id, CalendarI
 				: null
 		)
 
+		function renderChangesMessage() {
+			return viewModel.existingEvent && viewModel.existingEvent.isCopy
+				? m(".mt", lang.get("eventCopy_msg"))
+				: null
+		}
+
 		function renderDialogContent() {
 			startDatePicker.setDate(viewModel.startDate)
 			endDatePicker.setDate(viewModel.endDate)
 
 			return m(".calendar-edit-container.pb", [
 					renderHeading(),
+					renderChangesMessage(),
+					renderEasyGoingSelector(),
 					renderDateTimePickers(),
 					m(".flex.items-center", [
 						m(CheckboxN, {

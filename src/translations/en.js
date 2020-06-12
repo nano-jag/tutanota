@@ -1121,5 +1121,7 @@ module.exports = {
 		"who_label": "Who",
 		"when_label": "When",
 		"awaiting_label": "Awaiting",
+		"attendingEvent_label": "Going?",
+		"eventCopy_msg": "This event was sent from another calendar. Changes will only be visible in your copy of the event",
 	}
 }

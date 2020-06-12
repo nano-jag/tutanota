@@ -594,6 +594,11 @@ export class CalendarEventViewModel {
 		}
 	}
 
+	replyGoingDirectly(going: CalendarAttendeeStatusEnum): Promise<void> {
+		this.selectGoing(going)
+		return this.onOkPressed().return()
+	}
+
 	_distributionAddresses(guests: Array<CalendarEventAttendee>): Array<EncryptedMailAddress> {
 		return guests.map((a) => a.address)
 	}

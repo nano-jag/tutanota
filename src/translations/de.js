@@ -1111,6 +1111,8 @@ module.exports = {
 		"yes_label": "Ja",
 		"yourCalendars_label": "Deine Kalender",
 		"yourFolders_action": "DEINE ORDNER",
-		"yourMessage_label": "Deine Nachricht"
+		"yourMessage_label": "Deine Nachricht",
+		"attendingEvent_label": "Teilnehmen?",
+		"eventCopy_msg": "Diese Erinnerung wurde von einem anderen Kalender gesendet. Änderungen sind nur in deine Kopie sichtbar.",
 	}
 }
