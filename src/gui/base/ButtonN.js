@@ -22,7 +22,6 @@ export const ButtonType = Object.freeze({
 	Bubble: 'bubble',
 	TextBubble: 'textBubble',
 	Toggle: 'toggle',
-	Accent: 'accent',
 	PrimaryBorder: 'primaryBorder',
 })
 export type ButtonTypeEnum = $Values<typeof ButtonType>;

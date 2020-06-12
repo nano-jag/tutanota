@@ -346,7 +346,6 @@ styles.registerStyle('main', () => {
 		'.left': {'text-align': 'left'},
 		'.statusTextColor': {color: theme.content_accent},
 		'.button-height': {height: px(size.button_height)},
-		'.button-height-accent': {height: px(size.button_height_accent) + " !important"},
 		'.button-min-height': {'min-height': px(size.button_height)},
 		'.button-width-fixed': {width: px(size.button_height)},
 		'.large-button-height': {height: px(size.button_floating_size)},
