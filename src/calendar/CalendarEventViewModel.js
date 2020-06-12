@@ -376,9 +376,8 @@ export class CalendarEventViewModel {
 	}
 
 	canModifyOrganizer(): boolean {
-		return (this._eventType === EventType.OWN || this._eventType === EventType.INVITE)
-			&& (!this.existingEvent || !this.existingEvent.isCopy)
-			&& this.attendees.length === 0
+		return this._eventType !== EventType.SHARED_RO
+			&& (!this.existingEvent || (!this.existingEvent.isCopy && this.existingEvent.attendees.length === 0))
 	}
 
 	canModifyAlarms(): boolean {
